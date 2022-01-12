@@ -1,0 +1,72 @@
+<script>
+    function presentValue(pmt, r, n, t) {
+        let value = ((pmt*((1-(1/((1+r)**n)))/r)))/((1+r)**t);
+        return value;
+    }
+
+    function calculateValue(rewardRate, bytesPrice, discountRate, uploadDate) {
+        let totalValue = 0;
+        let dailyRate = ((1+(discountRate/100))**((1/365)))-1;
+
+        uploadDate = new Date(uploadDate);
+        let endDate = new Date('2031-12-05');
+        let today = new Date();
+        let daysSinceUpload = Math.floor((today - uploadDate) / (1000 * 3600 * 24));
+
+        // year 1
+        let periodLength = Math.min(365, 365-daysSinceUpload); // n = how many days this yield is collected
+        let periodStart = 0; // t = how many days in the future this yield starts
+        totalValue += presentValue(rewardRate*bytesPrice, dailyRate, Math.max(0, periodLength), periodStart);
+
+        // year 2
+        rewardRate++;
+        periodStart += Math.max(0, periodLength); // new period starts when the last period ended
+        periodLength = Math.min(365, 730-daysSinceUpload);
+        totalValue += presentValue(rewardRate*bytesPrice, dailyRate, Math.max(0, periodLength), periodStart);
+
+        // year 3
+        rewardRate++;
+        periodStart += Math.max(0, periodLength);
+        periodLength = Math.min(365, 1095-daysSinceUpload);
+        totalValue += presentValue(rewardRate*bytesPrice, dailyRate, Math.max(0, periodLength), periodStart);
+
+        // year 4
+        rewardRate++;
+        periodStart += Math.max(0, periodLength);
+        periodLength = Math.min(365, 1460-daysSinceUpload);
+        totalValue += presentValue(rewardRate*bytesPrice, dailyRate, Math.max(0, periodLength), periodStart);
+
+        // year 5
+        rewardRate++;
+        periodStart += Math.max(0, periodLength);
+        periodLength = Math.min(365, 1825-daysSinceUpload);
+        totalValue += presentValue(rewardRate*bytesPrice, dailyRate, Math.max(0, periodLength), periodStart);
+
+        // years 6-10
+        rewardRate++;
+        periodStart += Math.max(0, periodLength);
+        daysRemaining = Math.floor((endDate - today) / (1000 * 3600 * 24))-1825; // determine the max days in this period until yield cuts off
+        periodLength = Math.min(daysRemaining, 3650-daysSinceUpload);
+        totalValue += presentValue(rewardRate*bytesPrice, dailyRate, Math.max(0, periodLength), periodStart);
+
+        return totalValue;
+    }
+
+    function go() {
+        let rewardRate = parseInt(document.getElementById('rewardRate').value)
+        let bytesPrice = parseInt(document.getElementById('bytesPrice').value)
+        let discountRate = parseInt(document.getElementById('discountRate').value)
+        let uploadDate = document.getElementById('uploadDate').value
+        let pv = calculateValue(rewardRate, bytesPrice, discountRate, uploadDate);
+        document.getElementById('pv').innerHTML = pv.toLocaleString('en-US', {style: 'currency', currency: 'USD'});
+    }
+</script>
+
+<form>
+    <label>Reward Rate</label> <input id="rewardRate" type="number" value="2" /> bytes<br />
+    <label>Bytes Price</label> $<input id="bytesPrice" type="number" value="100" /><br />
+    <label>Discount Rate</label> <input id="discountRate" type="number" value="9" />%<br />
+    <label>Upload Date</label> <input id="uploadDate" type="date" value="2021-12-05" /><br />
+    <input type="button" onclick="go()" value="Go" /><br /><br />
+    Present Value: <span id="pv"></span>
+</form>
